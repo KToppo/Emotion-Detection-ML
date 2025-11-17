@@ -1,0 +1,12 @@
+__pycache__
+.ipynb_checkpoints
+Assets
+catboost_info
+myvenv
+data.csv
+Ensemble.ipynb
+Exprimental.ipynb
+model_selection.ipynb
+nohup.out
+test.py
+trash.ipynb
