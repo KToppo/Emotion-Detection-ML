@@ -18,6 +18,20 @@ def load_model():
 
 model, pipline, labels = load_model()
 
+
+face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+
+def adjusted_detect_face(img):
+    face_img = img.copy()
+    face_rect = face_cascade.detectMultiScale(face_img, scaleFactor=1.2, minNeighbors=5)
+
+    if len(face_rect) == 0:
+        return None
+
+    x, y, w, h = face_rect[0]
+    cropped_image = face_img[y:y+h, x:x+w]
+    return cropped_image
+
 # ------------------------
 # Video processor class
 # ------------------------
@@ -35,16 +49,20 @@ class EmotionProcessor(VideoProcessorBase):
             self.last_predict_time = time.time()
 
             try:
-                # ---- Preprocess image as per your model needs ----
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                resized = cv2.resize(gray, (48, 48))
-                processed = resized.reshape(1, -1)
-                X = pipline.transform(processed)
-                # print(processed.shape)
+                cropped_face = adjusted_detect_face(img)
+                if cropped_face is None:
+                    self.current_emotion = "No Face Detected"
+                else:
+                    # ---- Preprocess image as per your model needs ----
+                    gray = cv2.cvtColor(cropped_face, cv2.COLOR_BGR2GRAY)
+                    resized = cv2.resize(gray, (48, 48))
+                    processed = resized.reshape(1, -1)
+                    X = pipline.transform(processed)
+                    # print(processed.shape)
 
-                emotion = model.predict(X)
-                self.current_emotion = labels.inverse_transform(emotion)
-                # self.current_emotion = emotion
+                    emotion = model.predict(X)
+                    self.current_emotion = labels.inverse_transform(emotion)
+                    # self.current_emotion = emotion
             except Exception as e:
                 self.current_emotion = f"Error: {e}"
                 print(e)
